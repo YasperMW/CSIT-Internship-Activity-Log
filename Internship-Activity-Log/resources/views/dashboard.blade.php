@@ -51,6 +51,7 @@
                     <p class="text-xs font-bold text-slate-400 uppercase tracking-wide">Supervisor</p>
                     <p class="font-semibold text-slate-700">{{ $studentDetails['supervisor'] }}</p>
                     <p class="text-xs text-slate-400">{{ $studentDetails['supervisor_email'] }}</p>
+                    <p class="text-xs text-slate-400">Signature: {{ $studentDetails['supervisor_signature'] }}</p>
                 </div>
             </div>
         </div>
@@ -61,7 +62,7 @@
         <div class="relative bg-white rounded-2xl shadow-xl border border-slate-200 p-8 w-full max-w-lg mx-4">
             <h3 class="text-xl font-bold text-slate-900 mb-6">Edit Student Profile</h3>
             
-            <form action="{{ route('profile.update') }}" method="POST">
+            <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="md:col-span-2">
@@ -87,6 +88,10 @@
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-1">Supervisor Email (Optional)</label>
                         <input type="email" name="supervisor_email" value="{{ $studentDetails['supervisor_email'] !== 'Not Set' ? $studentDetails['supervisor_email'] : '' }}" class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base py-3 px-4">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Supervisor Signature (Optional)</label>
+                        <input type="file" name="supervisor_signature" accept="image/png,image/jpeg,image/jpg" class="block w-full rounded-lg border border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base py-3 px-4 file:mr-4 file:rounded-md file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-indigo-700 hover:file:bg-indigo-100">
                     </div>
                 </div>
                 

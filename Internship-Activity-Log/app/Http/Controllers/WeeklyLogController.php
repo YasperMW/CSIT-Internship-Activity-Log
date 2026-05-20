@@ -55,6 +55,7 @@ class WeeklyLogController extends Controller
             'company' => 'Not Set',
             'supervisor' => 'Not Set',
             'supervisor_email' => 'Not Set',
+            'supervisor_signature' => 'Not Set',
             'start_date' => 'Not Set',
         ];
 
@@ -71,6 +72,7 @@ class WeeklyLogController extends Controller
                     $studentDetails['supervisor'] = $coverSheet->getCell('C6')->getValue() ?: 'Not Set';
                     $studentDetails['supervisor_email'] = $coverSheet->getCell('C7')->getValue() ?: 'Not Set';
                     $studentDetails['start_date'] = $coverSheet->getCell('C8')->getValue() ?: 'Not Set';
+                    $studentDetails['supervisor_signature'] = $this->hasSupervisorSignatureImage($coverSheet) ? 'Uploaded' : 'Not Set';
                 }
 
                 for ($i = 1; $i <= 16; $i++) {
@@ -151,6 +153,53 @@ class WeeklyLogController extends Controller
         }
 
         return view('weekly-log.create', compact('week'));
+    }
+
+    private function hasSupervisorSignatureImage(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet): bool
+    {
+        foreach ($sheet->getDrawingCollection() as $drawing) {
+            if ($drawing->getCoordinates() === 'C9') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function removeSupervisorSignatureImages(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet): void
+    {
+        $collection = $sheet->getDrawingCollection();
+        $keys = [];
+
+        foreach ($collection as $key => $drawing) {
+            if ($drawing->getCoordinates() === 'C9') {
+                $keys[] = $key;
+            }
+        }
+
+        foreach ($keys as $key) {
+            $collection->offsetUnset($key);
+        }
+    }
+
+    private function embedSupervisorSignatureImage(
+        \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet,
+        \Illuminate\Http\UploadedFile $signature
+    ): void {
+        $this->removeSupervisorSignatureImages($sheet);
+
+        $drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
+        $drawing->setName('Supervisor Signature');
+        $drawing->setDescription('Supervisor Signature');
+        $drawing->setPath($signature->getPathname());
+        $drawing->setCoordinates('C9');
+        $drawing->setOffsetX(5);
+        $drawing->setOffsetY(5);
+        $drawing->setHeight(42);
+        $drawing->setWorksheet($sheet);
+
+        $sheet->getRowDimension(9)->setRowHeight(42);
+        $sheet->getColumnDimension('C')->setWidth(32);
     }
 
     /**
@@ -487,6 +536,7 @@ class WeeklyLogController extends Controller
             'company' => 'required|string',
             'supervisor' => 'nullable|string',
             'supervisor_email' => 'nullable|email',
+            'supervisor_signature' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'start_date' => 'required|date',
         ]);
 
@@ -509,6 +559,12 @@ class WeeklyLogController extends Controller
             $sheet->setCellValue('C6', $request->supervisor);
             $sheet->setCellValue('C7', $request->supervisor_email);
             $sheet->setCellValue('C8', $request->start_date);
+            $sheet->setCellValue('B9', 'SUPERVISOR SIGNATURE:');
+            $sheet->setCellValue('C9', '');
+
+            if ($request->hasFile('supervisor_signature')) {
+                $this->embedSupervisorSignatureImage($sheet, $request->file('supervisor_signature'));
+            }
 
             $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
             $writer->save($filePath);
