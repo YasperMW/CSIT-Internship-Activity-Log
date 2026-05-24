@@ -31,7 +31,7 @@ The app manages two main files in the root directory:
     ```
 2.  **Install Dependencies**:
     ```bash
-    cd activity-log-tracker
+    cd Internship-log-tracker
     composer install
     ```
 3.  **Configure Environment**:
